@@ -1,0 +1,81 @@
+name: neuraclinic-auth
+
+services:
+  neuraclinic-auth:
+    container_name: neuraclinic-auth
+    restart: unless-stopped
+    env_file: ../.env
+    build:
+      context: ../
+      dockerfile: ./.docker/Dockerfile
+    ports:
+      - 8002:8000
+    volumes:
+      - ../:/app-src
+      - ../certs:/app/certs:ro
+      - ../keys:/app/keys:ro
+      - ../../neuraclinic-users/certs:/app/users-certs:ro
+    environment:
+      ENVIRONMENT: development
+      AUTO_RUN_MIGRATIONS: "true"
+    depends_on:
+      neuraclinic-auth-db:
+        condition: service_healthy
+      neuraclinic-auth-rabbitmq:
+        condition: service_started
+    networks:
+      - neuraclinic-network
+      - neuraclinic-auth-network
+
+  neuraclinic-auth-db:
+    image: postgres:17.6
+    container_name: neuraclinic-auth-db
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: neuraclinic-auth
+      TZ: America/Hermosillo
+    volumes:
+      - neuraclinic-auth-db-data:/var/lib/postgresql/data
+    ports:
+      - 5434:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - neuraclinic-network
+      - neuraclinic-auth-network
+
+  neuraclinic-auth-rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: neuraclinic-auth-rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - neuraclinic-auth-network
+
+  neuraclinic-auth-adminer:
+    image: adminer
+    container_name: neuraclinic-auth-adminer
+    environment:
+      TZ: America/Hermosillo
+      ADMINER_DESIGN: "ng9"
+    ports:
+      - 8082:8080
+    depends_on:
+      neuraclinic-auth-db:
+        condition: service_started
+    networks:
+      - neuraclinic-auth-network
+
+networks:
+  neuraclinic-network:
+    external: true
+  neuraclinic-auth-network:
+    driver: bridge
+
+volumes:
+  neuraclinic-auth-db-data:
+    name: neuraclinic-auth-db-data

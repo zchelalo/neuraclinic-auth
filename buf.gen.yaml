@@ -1,0 +1,20 @@
+version: v2
+
+managed:
+  enabled: true
+  disable:
+    - module: buf.build/googleapis/googleapis
+  override:
+    - file_option: go_package_prefix
+      module: buf.build/zchelalo-labs/neuraclinic-proto-contracts
+      value: github.com/zchelalo/neuraclinic-auth/gen/go
+
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+  - remote: buf.build/grpc/go
+    out: gen/go
+    opt:
+      - paths=source_relative
