@@ -1,14 +1,12 @@
 package application
 
-import "errors"
+import autherrors "github.com/zchelalo/neuraclinic-auth/internal/modules/auth/application/errors"
 
-var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrInvalidToken       = errors.New("invalid token")
-	ErrForbidden          = errors.New("forbidden")
-	ErrNotFound           = errors.New("not found")
-	ErrInvalidResetCode   = errors.New("invalid reset code")
-	ErrResetExpired       = errors.New("password reset expired")
-	ErrTooManyAttempts    = errors.New("too many password reset attempts")
-	ErrInvalidInput       = errors.New("invalid input")
-)
+var ErrInvalidCredentials = autherrors.ErrInvalidCredentials
+var ErrInvalidToken = autherrors.ErrInvalidToken
+var ErrForbidden = autherrors.ErrForbidden
+var ErrNotFound = autherrors.ErrNotFound
+var ErrInvalidResetCode = autherrors.ErrInvalidResetCode
+var ErrResetExpired = autherrors.ErrResetExpired
+var ErrTooManyAttempts = autherrors.ErrTooManyAttempts
+var ErrInvalidInput = autherrors.ErrInvalidInput

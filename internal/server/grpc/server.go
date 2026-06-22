@@ -6,19 +6,25 @@ import (
 	"net"
 
 	"github.com/zchelalo/neuraclinic-auth/gen/go/auth/v1"
-	"github.com/zchelalo/neuraclinic-auth/internal/bootstrap"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
+
+type Config struct {
+	Port            int
+	ServiceName     string
+	TLSCertFilePath string
+	TLSKeyFilePath  string
+}
 
 type Server struct {
 	grpcServer *grpc.Server
 	listener   net.Listener
 }
 
-func New(cfg bootstrap.Config, logger *zap.Logger, authService authv1.AuthServiceServer) (*Server, error) {
-	cert, err := tls.LoadX509KeyPair(cfg.GRPCTLSCertPath, cfg.GRPCTLSKeyPath)
+func New(cfg Config, logger *zap.Logger, authService authv1.AuthServiceServer) (*Server, error) {
+	cert, err := tls.LoadX509KeyPair(cfg.TLSCertFilePath, cfg.TLSKeyFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("load grpc tls key pair: %w", err)
 	}

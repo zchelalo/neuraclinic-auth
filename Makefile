@@ -5,6 +5,7 @@ endif
 
 DOCKER_COMPOSE_FILE = ./.docker/compose.yml
 DOCKER_NETWORK = neuraclinic-network
+SQLC_IMAGE = sqlc/sqlc:1.31.1
 URI_DB = postgresql://$(DB_USER):$(DB_PASS)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)
 MIGRATE = docker run --rm -v $(shell pwd)/internal/db/migrations:/migrations --network $(DOCKER_NETWORK) migrate/migrate -path /migrations -database "$(URI_DB)" -verbose
 
@@ -75,6 +76,6 @@ build:
 	go build -buildvcs=false -trimpath -o dist/neuraclinic-auth ./cmd
 
 sqlc:
-	sqlc generate
+	docker run --rm --user $(shell id -u):$(shell id -g) -v $(shell pwd):/src -w /src $(SQLC_IMAGE) generate
 
 .PHONY: setup create-envs jwt-keys tls-generate-dev create-network proto migrate-up migrate-down compose compose-detached compose-build compose-build-detached compose-down fmt lint test coverage build sqlc

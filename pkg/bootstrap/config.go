@@ -4,9 +4,15 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
+)
+
+var (
+	config   Config
+	configMu sync.RWMutex
 )
 
 type Config struct {
@@ -88,7 +94,20 @@ func LoadConfig(dotenvPath string) (Config, error) {
 		return Config{}, err
 	}
 
+	setConfig(cfg)
 	return cfg, nil
+}
+
+func GetConfig() Config {
+	configMu.RLock()
+	defer configMu.RUnlock()
+	return config
+}
+
+func setConfig(cfg Config) {
+	configMu.Lock()
+	config = cfg
+	configMu.Unlock()
 }
 
 func (c Config) Validate() error {
@@ -128,18 +147,6 @@ func (c Config) Validate() error {
 	}
 
 	return nil
-}
-
-func (c Config) DBDSN() string {
-	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.DBUser,
-		c.DBPass,
-		c.DBHost,
-		c.DBPort,
-		c.DBName,
-		c.DBSSLMode,
-	)
 }
 
 func getEnv(key, fallback string) string {

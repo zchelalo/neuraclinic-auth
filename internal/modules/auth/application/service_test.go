@@ -19,9 +19,15 @@ func TestSignInCreatesSessionAndTokens(t *testing.T) {
 	now := time.Date(2026, 6, 19, 12, 0, 0, 0, time.UTC)
 
 	sessions := &fakeSessions{}
-	service := newTestService(&fakeUsers{identity: testIdentity(userID)}, sessions, &fakeResets{}, &fakePerms{}, &fakeTokens{}, &fakeEvents{})
-	service.now = func() time.Time { return now }
-	service.newUUID = uuidSeq(sessionID, refreshJTI)
+	service := newTestServiceWithRuntime(
+		&fakeUsers{identity: testIdentity(userID)},
+		sessions,
+		&fakeResets{},
+		&fakePerms{},
+		&fakeTokens{},
+		&fakeEvents{},
+		Runtime{Now: func() time.Time { return now }, NewUUID: uuidSeq(sessionID, refreshJTI)},
+	)
 
 	result, err := service.SignIn(ctx, "USER@EXAMPLE.COM", "Password123!")
 	if err != nil {
@@ -48,8 +54,7 @@ func TestRefreshTokenRevokesSessionOnReuse(t *testing.T) {
 
 	sessions := &fakeSessions{rotateOK: false}
 	tokens := &fakeTokens{refreshClaims: ports.RefreshClaims{UserID: userID, SessionID: sessionID, RefreshJTI: refreshJTI}}
-	service := newTestService(&fakeUsers{}, sessions, &fakeResets{}, &fakePerms{}, tokens, &fakeEvents{})
-	service.newUUID = uuidSeq(newRefreshJTI)
+	service := newTestServiceWithRuntime(&fakeUsers{}, sessions, &fakeResets{}, &fakePerms{}, tokens, &fakeEvents{}, Runtime{NewUUID: uuidSeq(newRefreshJTI)})
 
 	_, err := service.RefreshToken(ctx, "refresh-token")
 	if !errors.Is(err, ErrInvalidToken) {
@@ -71,9 +76,7 @@ func TestPasswordResetFlow(t *testing.T) {
 	sessions := &fakeSessions{}
 	resets := &fakeResets{}
 	events := &fakeEvents{}
-	service := newTestService(users, sessions, resets, &fakePerms{}, &fakeTokens{}, events)
-	service.now = func() time.Time { return now }
-	service.newUUID = uuidSeq(resetID, eventID)
+	service := newTestServiceWithRuntime(users, sessions, resets, &fakePerms{}, &fakeTokens{}, events, Runtime{Now: func() time.Time { return now }, NewUUID: uuidSeq(resetID, eventID)})
 
 	if err := service.RequestPasswordReset(ctx, "user@example.com"); err != nil {
 		t.Fatalf("RequestPasswordReset returned error: %v", err)
@@ -105,14 +108,18 @@ func TestPasswordResetFlow(t *testing.T) {
 }
 
 func newTestService(users ports.UserClient, sessions ports.SessionRepository, resets ports.PasswordResetRepository, perms ports.PermissionRepository, tokens ports.TokenManager, events ports.EventPublisher) *Service {
-	return NewService(Config{
+	return newTestServiceWithRuntime(users, sessions, resets, perms, tokens, events, DefaultRuntime())
+}
+
+func newTestServiceWithRuntime(users ports.UserClient, sessions ports.SessionRepository, resets ports.PasswordResetRepository, perms ports.PermissionRepository, tokens ports.TokenManager, events ports.EventPublisher, runtime Runtime) *Service {
+	return NewServiceWithRuntime(Config{
 		RefreshTokenTTL:          time.Hour,
 		PasswordResetOTPTTL:      10 * time.Minute,
 		PasswordResetTokenTTL:    15 * time.Minute,
 		PasswordResetMaxAttempts: 5,
 		TokenHashSecret:          "test-secret",
 		Environment:              "test",
-	}, users, sessions, resets, perms, tokens, events)
+	}, users, sessions, resets, perms, tokens, events, runtime)
 }
 
 func testIdentity(id uuid.UUID) ports.UserIdentity {
