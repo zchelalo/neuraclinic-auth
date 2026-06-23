@@ -50,7 +50,8 @@ make compose-down
 - `INTERNAL_SERVICE_TOKEN` must match the value configured in `neuraclinic-users`.
 - Access and refresh JWTs use separate RSA key pairs.
 - Password reset OTPs and reset tokens are stored hashed.
-- In development, the reset OTP is logged so flows can be tested before Notifications is ready.
+- Password reset requests publish `auth.v1.PasswordResetRequestedEvent` to RabbitMQ for `neuraclinic-notifications`.
+- In development, the reset OTP is still logged to simplify local testing.
 
 ## ID Convention
 

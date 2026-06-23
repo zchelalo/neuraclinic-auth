@@ -2,11 +2,13 @@ package events
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	authv1 "github.com/zchelalo/neuraclinic-auth/gen/go/auth/v1"
 	"github.com/zchelalo/neuraclinic-auth/internal/modules/auth/ports"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type NoopPublisher struct{}
@@ -55,7 +57,18 @@ func NewRabbitPublisher(url, exchange, routingKey string) (*RabbitPublisher, err
 }
 
 func (p *RabbitPublisher) PublishPasswordResetRequested(ctx context.Context, event ports.PasswordResetRequestedEvent) error {
-	body, err := json.Marshal(event)
+	body, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&authv1.PasswordResetRequestedEvent{
+		EventId:   event.EventID,
+		UserId:    event.UserID,
+		Email:     event.Email,
+		Otp:       event.OTP,
+		ExpiresAt: timestamppb.New(event.ExpiresAt),
+		RequestId: event.RequestID,
+		TraceId:   event.TraceID,
+	})
 	if err != nil {
 		return err
 	}

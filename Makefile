@@ -8,6 +8,7 @@ DOCKER_NETWORK = neuraclinic-network
 SQLC_IMAGE = sqlc/sqlc:1.31.1
 URI_DB = postgresql://$(DB_USER):$(DB_PASS)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)
 MIGRATE = docker run --rm -v $(shell pwd)/internal/db/migrations:/migrations --network $(DOCKER_NETWORK) migrate/migrate -path /migrations -database "$(URI_DB)" -verbose
+LOCAL_PROTO_CONTRACTS = ../neuraclinic-proto-contracts
 
 setup:
 	$(MAKE) create-envs
@@ -29,10 +30,19 @@ create-network:
 	docker network inspect $(DOCKER_NETWORK) >/dev/null 2>&1 || docker network create $(DOCKER_NETWORK)
 
 proto:
+ifneq ("$(wildcard $(LOCAL_PROTO_CONTRACTS)/buf.yaml)", "")
+	cd $(LOCAL_PROTO_CONTRACTS) && buf generate \
+		--template ../neuraclinic-auth/buf.gen.yaml \
+		--output ../neuraclinic-auth \
+		--path proto/auth/v1/auth.proto \
+		--path proto/shared/v1/shared.proto \
+		--path proto/user/v1/user.proto
+else
 	buf generate buf.build/zchelalo-labs/neuraclinic-proto-contracts \
 		--path auth/v1/auth.proto \
 		--path shared/v1/shared.proto \
 		--path user/v1/user.proto
+endif
 
 migrate-up:
 	$(MIGRATE) up
