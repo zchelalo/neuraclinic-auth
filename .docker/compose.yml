@@ -21,8 +21,6 @@ services:
     depends_on:
       neuraclinic-auth-db:
         condition: service_healthy
-      neuraclinic-auth-rabbitmq:
-        condition: service_started
     networks:
       - neuraclinic-network
       - neuraclinic-auth-network
@@ -45,15 +43,6 @@ services:
       retries: 5
     networks:
       - neuraclinic-network
-      - neuraclinic-auth-network
-
-  neuraclinic-auth-rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    container_name: neuraclinic-auth-rabbitmq
-    ports:
-      - 5672:5672
-      - 15672:15672
-    networks:
       - neuraclinic-auth-network
 
   neuraclinic-auth-adminer:

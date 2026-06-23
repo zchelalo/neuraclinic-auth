@@ -17,6 +17,14 @@ Run from `neuraclinic-auth`:
 make create-envs
 make jwt-keys
 make tls-generate-dev
+```
+
+Run shared services from the root `neuraclinic` repository:
+
+```bash
+cd ../neuraclinic
+make compose-detached
+cd ../neuraclinic-auth
 make create-network
 make compose-build
 ```
@@ -24,6 +32,7 @@ make compose-build
 The service listens inside Docker on `:8000` and is exposed on host port `8002`.
 
 `neuraclinic-users` must be running on `neuraclinic-network` because auth calls `UserService` over gRPC.
+`neuraclinic-rabbitmq` must also be running on `neuraclinic-network` because auth publishes password reset events there.
 
 ## Useful Commands
 
