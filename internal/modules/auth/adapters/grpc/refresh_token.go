@@ -10,7 +10,7 @@ import (
 func (s *Service) RefreshToken(ctx context.Context, req *authv1.RefreshTokenRequest) (*authv1.RefreshTokenResponse, error) {
 	result, err := s.app.RefreshToken(ctx, req.GetRefreshToken())
 	if err != nil {
-		return nil, mapError(err)
+		return nil, mapError(ctx, err)
 	}
 
 	return &authv1.RefreshTokenResponse{

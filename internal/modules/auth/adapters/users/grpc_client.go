@@ -20,6 +20,9 @@ import (
 const (
 	headerInternalServiceToken = "x-internal-service-token"
 	headerUserID               = "x-user-id"
+	headerRequestID            = "x-request-id"
+	headerTraceID              = "x-trace-id"
+	headerAcceptLanguage       = "accept-language"
 )
 
 type Config struct {
@@ -55,7 +58,7 @@ func New(cfg Config) (*Client, error) {
 }
 
 func (c *Client) VerifyPassword(ctx context.Context, email, password string) (ports.UserIdentity, error) {
-	ctx = c.withInternalToken(ctx)
+	ctx = c.withInternalToken(forwardMetadata(ctx))
 	resp, err := c.client.VerifyPassword(ctx, &userv1.UserServiceVerifyPasswordRequest{
 		Email:    email,
 		Password: password,
@@ -70,7 +73,7 @@ func (c *Client) VerifyPassword(ctx context.Context, email, password string) (po
 }
 
 func (c *Client) FindByID(ctx context.Context, id uuid.UUID) (ports.UserIdentity, error) {
-	ctx = metadata.AppendToOutgoingContext(ctx, headerUserID, id.String())
+	ctx = metadata.AppendToOutgoingContext(forwardMetadata(ctx), headerUserID, id.String())
 	resp, err := c.client.FindById(ctx, &userv1.UserServiceFindByIdRequest{Id: id.String()})
 	if err != nil {
 		return ports.UserIdentity{}, err
@@ -79,7 +82,7 @@ func (c *Client) FindByID(ctx context.Context, id uuid.UUID) (ports.UserIdentity
 }
 
 func (c *Client) FindByEmail(ctx context.Context, email string) (ports.UserIdentity, error) {
-	ctx = c.withInternalToken(ctx)
+	ctx = c.withInternalToken(forwardMetadata(ctx))
 	resp, err := c.client.FindByEmail(ctx, &userv1.UserServiceFindByEmailRequest{Email: email})
 	if err != nil {
 		return ports.UserIdentity{}, err
@@ -88,7 +91,7 @@ func (c *Client) FindByEmail(ctx context.Context, email string) (ports.UserIdent
 }
 
 func (c *Client) UpdatePassword(ctx context.Context, id uuid.UUID, newPassword string) error {
-	ctx = c.withInternalToken(ctx)
+	ctx = c.withInternalToken(forwardMetadata(ctx))
 	_, err := c.client.UpdatePassword(ctx, &userv1.UserServiceUpdatePasswordRequest{
 		Id:          id.String(),
 		NewPassword: newPassword,
@@ -102,6 +105,23 @@ func (c *Client) Close() error {
 
 func (c *Client) withInternalToken(ctx context.Context) context.Context {
 	return metadata.AppendToOutgoingContext(ctx, headerInternalServiceToken, c.internalToken)
+}
+
+func forwardMetadata(ctx context.Context) context.Context {
+	incoming, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return ctx
+	}
+	outgoing := metadata.MD{}
+	for _, key := range []string{headerAcceptLanguage, headerRequestID, headerTraceID} {
+		if values := incoming.Get(key); len(values) > 0 {
+			outgoing.Set(key, values...)
+		}
+	}
+	if len(outgoing) == 0 {
+		return ctx
+	}
+	return metadata.NewOutgoingContext(ctx, outgoing)
 }
 
 func transportCredentials(cfg Config) (credentials.TransportCredentials, error) {

@@ -3,6 +3,7 @@ package appctx
 import (
 	"context"
 
+	"github.com/zchelalo/neuraclinic-auth/internal/shared/i18n"
 	"go.uber.org/zap"
 )
 
@@ -12,6 +13,7 @@ const (
 	loggerKey    key = "logger"
 	requestIDKey key = "request_id"
 	traceIDKey   key = "trace_id"
+	languageKey  key = "language"
 )
 
 func WithLogger(ctx context.Context, logger *zap.Logger) context.Context {
@@ -45,4 +47,15 @@ func TraceID(ctx context.Context) string {
 		return value
 	}
 	return ""
+}
+
+func WithLanguage(ctx context.Context, language i18n.Language) context.Context {
+	return context.WithValue(ctx, languageKey, language)
+}
+
+func Language(ctx context.Context) i18n.Language {
+	if value, ok := ctx.Value(languageKey).(i18n.Language); ok {
+		return value
+	}
+	return i18n.English
 }

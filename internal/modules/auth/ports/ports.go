@@ -108,6 +108,7 @@ type PasswordResetRequestedEvent struct {
 	UserID    string    `json:"user_id"`
 	Email     string    `json:"email"`
 	OTP       string    `json:"otp"`
+	Language  string    `json:"language"`
 	ExpiresAt time.Time `json:"expires_at"`
 	RequestID string    `json:"request_id"`
 	TraceID   string    `json:"trace_id"`

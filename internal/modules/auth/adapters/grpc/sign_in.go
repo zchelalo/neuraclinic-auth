@@ -10,7 +10,7 @@ import (
 func (s *Service) SignIn(ctx context.Context, req *authv1.SignInRequest) (*authv1.SignInResponse, error) {
 	result, err := s.app.SignIn(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
-		return nil, mapError(err)
+		return nil, mapError(ctx, err)
 	}
 
 	return &authv1.SignInResponse{

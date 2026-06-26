@@ -65,6 +65,7 @@ func (p *RabbitPublisher) PublishPasswordResetRequested(ctx context.Context, eve
 		UserId:    event.UserID,
 		Email:     event.Email,
 		Otp:       event.OTP,
+		Language:  event.Language,
 		ExpiresAt: timestamppb.New(event.ExpiresAt),
 		RequestId: event.RequestID,
 		TraceId:   event.TraceID,

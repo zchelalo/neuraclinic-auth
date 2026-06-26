@@ -9,7 +9,7 @@ import (
 func (s *Service) VerifyToken(ctx context.Context, req *authv1.VerifyTokenRequest) (*authv1.VerifyTokenResponse, error) {
 	result, err := s.app.VerifyToken(ctx, req.GetAccessToken())
 	if err != nil {
-		return nil, mapError(err)
+		return nil, mapError(ctx, err)
 	}
 
 	resp := &authv1.VerifyTokenResponse{

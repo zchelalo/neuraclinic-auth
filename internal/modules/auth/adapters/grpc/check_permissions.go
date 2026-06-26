@@ -9,7 +9,7 @@ import (
 func (s *Service) CheckPermissions(ctx context.Context, req *authv1.CheckPermissionsRequest) (*authv1.CheckPermissionsResponse, error) {
 	allowed, err := s.app.CheckPermissions(ctx, req.GetAccessToken(), req.GetRequiredPermissionsKeys())
 	if err != nil {
-		return nil, mapError(err)
+		return nil, mapError(ctx, err)
 	}
 
 	return &authv1.CheckPermissionsResponse{Allowed: allowed}, nil

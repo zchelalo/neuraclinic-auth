@@ -67,6 +67,7 @@ func (uc *UseCase) Execute(ctx context.Context, cmd Command) error {
 		UserID:    user.ID.String(),
 		Email:     email,
 		OTP:       otp,
+		Language:  string(appctx.Language(ctx)),
 		ExpiresAt: request.ExpiresAt,
 		RequestID: appctx.RequestID(ctx),
 		TraceID:   appctx.TraceID(ctx),

@@ -9,10 +9,12 @@ import (
 	"github.com/google/uuid"
 	sharedv1 "github.com/zchelalo/neuraclinic-auth/gen/go/shared/v1"
 	"github.com/zchelalo/neuraclinic-auth/internal/modules/auth/ports"
+	"github.com/zchelalo/neuraclinic-auth/internal/shared/appctx"
+	"github.com/zchelalo/neuraclinic-auth/internal/shared/i18n"
 )
 
 func TestSignInCreatesSessionAndTokens(t *testing.T) {
-	ctx := context.Background()
+	ctx := appctx.WithLanguage(context.Background(), i18n.Spanish)
 	userID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	sessionID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	refreshJTI := uuid.MustParse("33333333-3333-3333-3333-333333333333")
@@ -66,7 +68,7 @@ func TestRefreshTokenRevokesSessionOnReuse(t *testing.T) {
 }
 
 func TestPasswordResetFlow(t *testing.T) {
-	ctx := context.Background()
+	ctx := appctx.WithLanguage(context.Background(), i18n.Spanish)
 	userID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	resetID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	eventID := uuid.MustParse("33333333-3333-3333-3333-333333333333")
@@ -83,6 +85,9 @@ func TestPasswordResetFlow(t *testing.T) {
 	}
 	if events.last.OTP == "" {
 		t.Fatal("expected reset OTP event")
+	}
+	if events.last.Language != "es" {
+		t.Fatalf("expected event language es, got %q", events.last.Language)
 	}
 
 	resetToken, err := service.VerifyResetCode(ctx, "user@example.com", events.last.OTP)
